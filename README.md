@@ -181,15 +181,14 @@ Refinements:
 
 ---
 
-## 🖼️ Screenshots (Optional)
+<img width="1820" height="882" alt="image" src="https://github.com/user-attachments/assets/c40ea282-1705-4b85-a96f-45e32ffc16b4" />
 
-If available, include:
+<img width="1823" height="744" alt="image" src="https://github.com/user-attachments/assets/9ebc64fa-e732-430f-a1cf-745cf7d79f1f" />
 
-* Example OCR image
-* Terminal logs showing steps
-* Postman result screenshots
+<img width="1911" height="901" alt="image" src="https://github.com/user-attachments/assets/a78294e8-d950-481b-ad3e-7d3a80a8545d" />
 
-*(You can place screenshots in a `/screenshots` folder and reference them here.)*
+
+
 
 ---
 
