@@ -149,6 +149,10 @@ curl -X POST http://localhost:3002/api/profile \
 
    * Returns `risk_level`, identified `factors`, and `recommendations`.
 
+
+   <img width="918" height="614" alt="image" src="https://github.com/user-attachments/assets/81754784-8d94-4bb7-9484-7aac13fbd7ea" />
+
+
 ---
 
 ## 🤖 Gemini Prompt & Refinement Logic
