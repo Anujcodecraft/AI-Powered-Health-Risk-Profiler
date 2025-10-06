@@ -18,6 +18,93 @@ const EXPECTED_FIELDS = ['age', 'smoker', 'exercise', 'diet'];
 
 
 
+async function getLLMRecommendations(factors) {
+    if (factors.length === 0) return ["Maintain your healthy lifestyle habits."];
+    const prompt = `Based on the following health risk factors: ${factors.join(', ')}. Generate a JSON array of 3 short, actionable, non-diagnostic wellness tips. The tone should be encouraging and general. Do not give medical advice. Example format: ["Tip 1 text.", "Tip 2 text.", "Tip 3 text."]. JSON:`;
+    try {
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+        const jsonString = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        return JSON.parse(jsonString);
+    } catch (error) {
+        console.error("Error calling LLM:", error);
+        return ["Focus on a balanced diet and regular exercise for better health."];
+    }
+}
+
+
+async function analyzeHealthData(answers) {
+    const factors = [];
+    let score = 0;
+    if (answers.smoker) factors.push("smoking");
+    if (answers.exercise === 'rarely' || answers.exercise === 'never') factors.push("low exercise");
+    if (answers.diet === 'high sugar' || answers.diet === 'high fat') factors.push("poor diet");
+    if (answers.age > 50) factors.push("age over 50");
+    if (factors.includes("smoking")) score += 30;
+    if (factors.includes("low exercise")) score += 20;
+    if (factors.includes("poor diet")) score += 25;
+    if (factors.includes("age over 50")) score += 10;
+    let riskLevel = 'low';
+    if (score >= 50) riskLevel = 'high';
+    else if (score >= 25) riskLevel = 'medium';
+
+    const recommendations = await getLLMRecommendations(factors);
+    return { risk_level: riskLevel, factors: factors, recommendations: recommendations, status: "ok" };
+}
+
+//     this is the parsing function
+
+function parseSurveyText(text) {
+    let trimmedText = text.trim();
+    let answers = {};
+
+    if (trimmedText.startsWith('{') && trimmedText.endsWith('}')) {
+        console.log("ynha hun m.");
+        try {
+            
+            let cleanedText = trimmedText.replace(/([{,])\s*([a-zA-Z0-9_]+)\s*:/g, '$1"$2":'); 
+            cleanedText = cleanedText.replace(/:\s*([a-zA-Z0-9_]+)\s*([,}])/g, ':"$1"$2');
+            
+            console.log("Cleaned Text for Parsing:", cleanedText); 
+            
+            answers = JSON.parse(cleanedText);
+        } catch (e) {
+            console.error("Failed to parse OCR text as JSON, it might be malformed.", e);
+            return {};
+        }
+    } else {
+        console.log("Dsecond ynha.");
+        const regex = /^([^:]+):\s*(.+)$/gm;
+        let match;
+        while ((match = regex.exec(trimmedText)) !== null) {
+            const key = match[1].trim().toLowerCase();
+            let value = match[2].trim().toLowerCase();
+            if (EXPECTED_FIELDS.includes(key)) {
+                if (key === 'age') value = parseInt(value, 10) || null;
+                else if (key === 'smoker' || key === 'alcoholic') value = (value === 'yes' || value === 'true');
+                answers[key] = value;
+            }
+        }
+    }
+    
+    console.log( answers);
+    return answers;
+}
+
+
+function processAnswers(answers) {
+    const missingFields = EXPECTED_FIELDS.filter(field => !answers.hasOwnProperty(field));
+    if (missingFields.length > EXPECTED_FIELDS.length / 2) {
+        return { status: "incomplete_profile", reason: `>50% fields missing. Missing: ${missingFields.join(', ')}` };
+    }
+
+    return { status: "ok", data: answers };
+}
+
+
+
+
 
 app.post('/api/profile', upload.single('image'), async (req, res) => {
     console.log('\n--- NEW REQUEST RECEIVED ---');
